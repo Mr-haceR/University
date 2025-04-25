@@ -1,5 +1,7 @@
 import re
 
+
+# Mapping all brackets to normal parentheses
 def normalize_brackets(expr):
     return expr.replace('{', '(').replace('}', ')').replace('[', '(').replace(']', ')')
 
@@ -7,8 +9,10 @@ def tokenize(expression):
     token_pattern = r'\d+\.\d+|\d+|[+\-*/()]'
     return re.findall(token_pattern, expression)
 
+# Operator precedence
 precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
 
+# Applies an operator to two operands
 def apply_operator(op, a, b):
     a, b = float(a), float(b)
     if op == '+': return a + b
@@ -48,7 +52,7 @@ def evaluate_infix(expression):
         elif token == ')':
             while ops and ops[-1] != '(':
                 pop_and_eval()
-            ops.pop()
+            ops.pop()  # remove '('
 
     while ops:
         pop_and_eval()
@@ -73,7 +77,7 @@ def evaluate_postfix(expression):
             print(f"Applied operator: {token}")
             print(f"Left: {a} Right: {b} Result: {result}")
             stack.append(result)
-        elif token in ("()", "[]", "{}"):
+        elif token in ("()", "[]", "{}"):  # grouped operator indication
             continue
         else:
             stack.append(token)
@@ -107,17 +111,18 @@ def evaluate_prefix(expression):
     print(f"Result: {result}")
     return result
 
+# Main logic
 if __name__ == "__main__":
     while True:
         print("*********************************************************************************************\n" \
-              "*                                         Evaluator                                         *\n" \
-              "*********************************************************************************************\n" \
-              "Menu > \n" \
-              "-----------------------------------------\n" \
-              "1. Infix\n" \
-              "2. Prefix\n" \
-              "3. Postfix\n" \
-              "4. Exit\n")
+            "*                                         Evaluator                                         *\n" \
+            "*********************************************************************************************\n" \
+            "Menu > \n" \
+            "-----------------------------------------\n" \
+            "1. Infix\n" \
+            "2. Prefix\n" \
+            "3. Postfix\n" \
+            "4. Exit\n")
         choice = int(input("Enter your choice: "))
         if choice == 1:
             expression = input("Enter the exprssion: ")
@@ -132,3 +137,5 @@ if __name__ == "__main__":
             break
         else: 
             print("Invalid choice!")
+
+
