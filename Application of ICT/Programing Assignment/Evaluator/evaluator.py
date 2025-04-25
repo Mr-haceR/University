@@ -48,7 +48,7 @@ def evaluate_infix(expression):
         elif token == ')':
             while ops and ops[-1] != '(':
                 pop_and_eval()
-            ops.pop()  # remove '('
+            ops.pop()
 
     while ops:
         pop_and_eval()
@@ -110,14 +110,14 @@ def evaluate_prefix(expression):
 if __name__ == "__main__":
     while True:
         print("*********************************************************************************************\n" \
-            "*                                         Evaluator                                         *\n" \
-            "*********************************************************************************************\n" \
-            "Menu > \n" \
-            "-----------------------------------------\n" \
-            "1. Infix\n" \
-            "2. Prefix\n" \
-            "3. Postfix\n" \
-            "4. Exit\n")
+              "*                                         Evaluator                                         *\n" \
+              "*********************************************************************************************\n" \
+              "Menu > \n" \
+              "-----------------------------------------\n" \
+              "1. Infix\n" \
+              "2. Prefix\n" \
+              "3. Postfix\n" \
+              "4. Exit\n")
         choice = int(input("Enter your choice: "))
         if choice == 1:
             expression = input("Enter the exprssion: ")
