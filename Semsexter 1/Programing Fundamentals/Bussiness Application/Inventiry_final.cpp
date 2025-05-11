@@ -20,10 +20,6 @@ int productCount = 0;
 
 string choice;
 
-const char* adminColor = "color 02";
-const char* custommerColor = "color 03";
-const char* defaultColor = "color 07";
-
 // Globol data structures END
 
 // Function prototypes START
@@ -49,7 +45,7 @@ void placeOrder();
 // main STRAT
 
 main() {
-    system(defaultColor);
+    system("color 07");
     while (true) {
         choice = landingPage();
         if (choice == "1") {
@@ -74,11 +70,11 @@ main() {
             cout << w;
             while (true) {    
                 if (w == "ADMIN") {
-                    system(adminColor);
+                    system("color 02");
                     adminMenu();
                 }
                 else if (w == "CUSTOMMER") {
-                    system(custommerColor);
+                    system("color 03");
                     customerMenu();
                 }
                 else if (w == "WRONG") {
@@ -87,7 +83,7 @@ main() {
                 }
                 break;
             }
-            system(defaultColor);
+            system("color 07");
         } 
         else if (choice == "2") {
             if (userCount == 10) {
@@ -139,7 +135,7 @@ main() {
             getch();
         }
     }
-    system(defaultColor);
+    system("color 07");
     clearScreen();
 }
 
