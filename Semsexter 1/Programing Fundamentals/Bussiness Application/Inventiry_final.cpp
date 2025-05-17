@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <conio.h>
 
 using namespace std;
@@ -16,16 +18,27 @@ const int TOTAL_PRODUCTS = 10;
 string productNames[TOTAL_PRODUCTS];
 float productPrices[TOTAL_PRODUCTS];
 int productStocks[TOTAL_PRODUCTS];
+int productID[TOTAL_PRODUCTS];
 int productCount = 0;
 
+string loggedInAs;
+int currentUserID;
 string choice;
 
 // Globol data structures END
 
 // Function prototypes START
-
+void loadUsers();
+void saveUsers();
+void loadProducts();
+void saveProducts();
+void loadData();
+void saveData();
 void printHeader();
+string deleteUser(string username, string password, int id);
+string deleteProduct(string name, int id);
 string landingPage();
+void showAllHistory();
 void adminMenu();
 void clearScreen();
 string login(string username, string password, int id);
@@ -39,12 +52,15 @@ void customerMenu();
 void listAllProductsWithDetails();
 void sortProducts(int sortType); // 1 for cheapest to most expensive, 2 for most expensive to cheapest
 void placeOrder();
+void addToHistory(string username, int userID, float total);
+void showMyHistory(string username, int userID);
 
 // Function prototypes END
 
 // main STRAT
 
 main() {
+    loadData();
     system("color 07");
     while (true) {
         choice = landingPage();
@@ -67,14 +83,17 @@ main() {
             cout << "Enter the unique id assigned to you at sign up: ";
             cin >> id;
             string w = login(username, password, id);
-            cout << w;
             while (true) {    
                 if (w == "ADMIN") {
                     system("color 02");
+                    loggedInAs = username;
+                    currentUserID = id;
                     adminMenu();
                 }
                 else if (w == "CUSTOMMER") {
                     system("color 03");
+                    loggedInAs = username;
+                    currentUserID = id;
                     customerMenu();
                 }
                 else if (w == "WRONG") {
@@ -128,6 +147,34 @@ main() {
             continue;
         } 
         else if (choice == "3") {
+            if (userCount == 0) {
+                cout << endl << "There are no users in the system yet. Press any key to continue...";
+                getch();
+                continue;
+            }
+            string username, password; 
+            int id;
+            clearScreen();
+            printHeader();
+            cout << "Delete Account >" << endl << 
+                    "------------------------" << endl << endl;
+            cout << "Enter username: ";
+            cin >> username;
+            cout << "Enter password: ";
+            cin >> password;
+            cout << "Enter the unique id assigned to you at sign up: ";
+            cin >> id;
+            string w = deleteUser(username, password, id);
+            if (w == "DONE") {
+                cout << endl << "Account Deleted: " << username << ". Press any key to continue...";
+                getch();
+            }
+            else if (w == "FAILED") {
+                cout << "Wrong Credentials. Press any key to continue...";
+                getch();
+            }
+        }
+        else if (choice == "4") {
             break;
         } 
         else {
@@ -137,6 +184,7 @@ main() {
     }
     system("color 07");
     clearScreen();
+    saveData();
 }
 
 // main END
@@ -154,7 +202,8 @@ string landingPage() {
     printHeader();
     cout << "1. Login" << endl <<
             "2. Sign Up" << endl <<
-            "3. Exit" << endl << endl <<
+            "3. Delete Account." << endl <<
+            "4. Exit" << endl << endl <<
             "Enter your choice: ";
     cin >> choice;
     return choice;
@@ -186,6 +235,24 @@ string signUp() {
     return choice;
 }
 
+string deleteUser(string username, string password, int id) {
+    int index = -1;
+    for (int i = 0; i < userCount; i++) {
+        if (usernames[i] == username && passwords[i] == password && uniqueID[i] == id) {
+            index = i;
+        }
+    }
+    if (index == -1) return "FAILED";
+    for (int j = index; index < userCount-1; j++) {
+        usernames[j] = usernames[j + 1];
+        passwords[j] = passwords[j + 1];
+        roles[j] = roles[j + 1];
+        uniqueID[j] = uniqueID[j + 1];
+    }
+    userCount--;
+    return "DONE";
+}
+
 void addUser(string username, string password, int id, string role) {
     usernames[userCount] = username;
     passwords[userCount] = password;
@@ -206,7 +273,9 @@ void adminMenu() {
                 "2. List All products." << endl << 
                 "3. Check product details." << endl << 
                 "4. Update product details." << endl <<
-                "5. Logout." << endl << endl <<
+                "5. Delete Product." << endl <<
+                "6. Orders History" << endl <<
+                "7. Logout." << endl << endl <<
                 "Enter your choice: ";
         cin >> choice;
         if (choice == "1") {
@@ -222,6 +291,40 @@ void adminMenu() {
             updateProductDetails();
         }
         else if (choice == "5") {
+            if (productCount == 0) {
+                cout << endl << "There are no users in the system yet. Press any key to continue...";
+                getch();
+                continue;
+            }
+            string name; 
+            int id;
+            clearScreen();
+            printHeader();
+            cout << "Delete Product >" << endl << 
+                    "------------------------" << endl << endl;
+            for (int i = 0; i < productCount; i++) {
+                cout << i + 1 << ". Name: " << productNames[i] << ", Product ID: " << productID[i] << endl; 
+            }
+            cout << "Enter Product Name: ";
+            cin >> name;
+            cout << "Enter Product ID: ";
+            cin >> id;
+            string w = deleteProduct(name, id);
+            if (w == "DONE") {
+                cout << endl << "Product Deleted: " << name << ". Press any key to continue...";
+                getch();
+            }
+            else if (w == "FAILED") {
+                cout << "Wrong Information. Press any key to continue...";
+                getch();
+            }
+        }
+        else if (choice == "6") {
+            showAllHistory();
+            cout << endl << endl << "Press any key to continue...";
+            getch();
+        }
+        else if (choice == "7") {
             break;
         }
         else {
@@ -229,6 +332,45 @@ void adminMenu() {
             getch();
         }
     }
+}
+
+void showAllHistory() {
+    fstream file;
+    file.open("history.txt", ios::in);
+    string name, id, total;
+    int i = 1;
+    cout << endl << "All Order History: " << endl;
+    while (!file.eof()) {
+        file >> name;
+        file >> id;
+        file >> total;
+        cout << i << ". Custommer: " << name << ", User ID: " << id << ": Total was $" << total << endl;
+        i++;
+    }
+}
+
+void addToHistory(string username, int userID, float total) {
+    fstream file;
+    file.open("history.txt", ios::app);
+    file << "\n" << username << " " << userID << " " << total;
+}
+
+string deleteProduct(string name, int id) {
+    int index = -1;
+    for (int i = 0; i < productCount; i++) {
+        if (productNames[i] == name && productID[i] == id) {
+            index = i;
+        }
+    }
+    if (index == -1) return "FAILED";
+    for (int j = index; j < productCount-1; j++) {
+        productNames[j] = productNames[j + 1];
+        productPrices[j] = productPrices[j + 1];
+        productStocks[j] = productStocks[j + 1];
+        productID[j] = productID[j + 1];
+    }
+    productCount--;
+    return "DONE";
 }
 
 void addProduct() {
@@ -245,6 +387,8 @@ void addProduct() {
         cout << "Enter number of units of " << productNames[productCount] << " in stock: ";
         cin >> productStocks[productCount];
         cout << endl << "Product Added: " << productNames[productCount] << endl;
+        productID[productCount] = productCount;
+        cout << "The Unique Product ID is " << productID[productCount] << endl;
         productCount++;
     } 
     else {
@@ -298,6 +442,7 @@ void viewProductDetails() {
             cout << "Name: " << productNames[index] << endl;
             cout << "Price: $" << productPrices[index] << endl;
             cout << "Stock: " << productStocks[index] << " units" << endl;
+            cout << "Product ID: " << productID[index] << endl;
         }
     } 
     else {
@@ -352,7 +497,8 @@ void customerMenu() {
                 "2. Sort all products from cheapest to most expensive." << endl <<
                 "3. Sort all products from most expensive to cheapest." << endl <<
                 "4. Place an order." << endl <<
-                "5. Sign Out." << endl << endl <<
+                "5. Your Order History" << endl <<
+                "6. Sign Out." << endl << endl <<
                 "Enter your choice: ";
         cin >> choice;
         if (choice == "1") {
@@ -368,6 +514,9 @@ void customerMenu() {
             placeOrder();
         }
         else if (choice == "5") {
+            showMyHistory(loggedInAs, currentUserID);
+        }
+        else if (choice == "6") {
             break;
         }
         else {
@@ -378,6 +527,24 @@ void customerMenu() {
         cout << endl << "Press any key to continue...";
         getch();
     }
+}
+
+void showMyHistory(string username, int userID) {
+    fstream file;
+    file.open("history.txt", ios::in);
+    string name;
+    int id, total, i = 1;
+    cout << endl << "Your Order History: " << endl;
+    while(!file.eof()) {
+        file >> name;
+        file >> id;
+        file >> total;
+        if (name == username && id == userID) {
+            cout << endl << i << ". Your total was $" << total;
+            i++;
+        }
+    }
+    file.close();
 }
 
 void listAllProductsWithDetails() {
@@ -391,7 +558,7 @@ void listAllProductsWithDetails() {
     else {
         cout << "Available Products:" << endl;
         for (int i = 0; i < productCount; i++) {
-            cout << i + 1 << ".\n Name: " << productNames[i] << "\nPrice: $" << productPrices[i] << "\nStock: " << productStocks[i] << " units" << endl;
+            cout << i + 1 << ".\nName: " << productNames[i] << "\nPrice: $" << productPrices[i] << "\nStock: " << productStocks[i] << " units" << endl << "\nProduct ID: " << productID[i] << endl;
         }
     }
 }
@@ -484,6 +651,7 @@ void placeOrder() {
             } 
             else if (orderChoiceInt == productCount + 1) {
                 cout << endl << "Your total order price is: $" << total_price << endl;
+                addToHistory(loggedInAs, currentUserID, total_price);
                 break;
             } 
             else {
@@ -492,6 +660,70 @@ void placeOrder() {
             }
         }
     }
+}
+
+void loadUsers() {
+    fstream file;
+    file.open("users.txt", ios::in);
+    string userCountL;
+    getline(file, userCountL);
+    userCount = stoi(userCountL);
+    while (!file.eof()) {
+        for (int i = 0; i < userCount; i++) {
+            file >> usernames[i];
+            file >> passwords[i];
+            file >> roles[i];
+            file >> uniqueID[i];
+        }
+    }
+    file.close();
+}
+
+void saveUsers() {
+    fstream file;
+    file.open("users.txt", ios::out);
+    file << userCount << "\n";
+    for (int i = 0; i < userCount; i++) {
+        file << usernames[i] << " " << passwords[i] << " " << roles[i] << " " << uniqueID[i] << "\n";
+    }
+    file.close();
+}
+
+void loadProducts() {
+    fstream file;
+    file.open("products.txt", ios::in);
+    string productCountL;
+    getline(file, productCountL);
+    productCount = stoi(productCountL);
+    while (!file.eof()) {
+        for (int i = 0; i < productCount; i++) {
+            file >> productNames[i];
+            file >> productPrices[i];
+            file >> productStocks[i];
+            file >> productID[i];
+        }
+    }
+    file.close();
+}
+
+void saveProducts() {
+    fstream file;
+    file.open("products.txt", ios::out);
+    file << productCount << "\n";
+    for (int i = 0; i < productCount; i++) {
+        file << productNames[i] << " " << productPrices[i] << " " << productStocks[i] << " " << productID[i] << "\n";
+    }
+    file.close();
+}
+
+void loadData() {
+    loadUsers();
+    loadProducts();
+}
+
+void saveData() {
+    saveUsers();
+    saveProducts();
 }
 
 // Function definition END
