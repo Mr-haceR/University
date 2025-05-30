@@ -1,1 +1,4 @@
-0
+2
+
+Talal Ahmed,123,ADMIN,0
+Ali,123,CUSTOMER,1

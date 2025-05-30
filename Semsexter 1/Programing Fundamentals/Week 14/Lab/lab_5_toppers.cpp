@@ -30,6 +30,18 @@ void saveToFile(string names[], int adNumbers[], float percentages[], string fil
 void getStudentDetails(string names[], int adNumbers[], float percentages[], string fileName) {
     fstream file;
     file.open(fileName, ios::in);
+    if (!file.is_open()) {
+        file.open("Task5.txt", ios::out);
+        if (file.is_open()) {
+            string text = "John\n123\n76\nJane\n231\n92\nSmith\n421\n65";
+            file << text;
+            file.close();
+            file.open("Task5.txt", ios::in);
+        }
+        else {
+            cout << "Failed to create Task5.txt";
+        }
+    }
     string line;
     while (!file.eof()) {
         getline(file, line);
