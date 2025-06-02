@@ -5,9 +5,14 @@
 
 using namespace std;
 
+// Constants
 const int rows = 31;
 const int cols = 71;
 const int tickTime = 100;
+const int ghost1StartX = 54, ghost1StartY = 20,
+          ghost2StartX = 2, ghost2StartY = 22,
+          ghost3StartX = 3, ghost3StartY = 16,
+          ghost4StartX = 22, ghost4StartY = 9;
 
 char mapp[rows][cols + 1] = {
     "#######################################################################",
@@ -20,13 +25,13 @@ char mapp[rows][cols + 1] = {
     "############### . #############   ###   ############# . ###############",
     "              # . #############         ############# . #              ",
     "              # . ###                             ### . #              ",
-    "############### . ###   _________     _________   ### . ###############",
-    "                .       |                     |       .                ",
-    "############### . ###   |                     |   ### . ###############",
-    "              # . ###   |_____________________|   ### . #              ",
-    "              # . ###              p              ### . #              ",
+    "############### . ###   #########     #########   ### . ###############",
+    "# . . . . . . . .       #                     #       . . . . . . . . #",
+    "############### . ###   #                     #   ### . ###############",
+    "              # . ###   #######################   ### . #              ",
+    "              # . ### G            p              ### . #              ",
     "############### . ###   #######################   ### . ###############",
-    "# . . . . . . . . . . . . . . . . ### . . . . . . . . . . . . . . . . #",
+    "# .G. . . . . . . . . . . . . . . ### . . . . . . . . . . . . . . . . #",
     "# O ########### . ############# . ### . ############# . ########### O #",
     "# . . . ####### . . . . . . . . . . . . . . . . . . . . ####### . . . #",
     "##### . ####### . ### . ####################### . ### . ####### . #####",
@@ -36,34 +41,41 @@ char mapp[rows][cols + 1] = {
     "#######################################################################"
 };
 
-int x = 35, y = 14, effectiveTickTime = tickTime, score = 0, lives = 3,
-    ghost1X = 54, ghost1Y = 20,
-    ghost2X = 2, ghost2Y = 22,
-    ghost3X = 3, ghost3Y = 16,
-    ghost4X = 22, ghostY = 14;
+// Globol Variables
+int x = 35, y = 14, tickCounter = 0, score = 0, lives = 3, randy, tickCountForisEnergized = 0,
+    ghost1X = ghost1StartX, ghost1Y = ghost1StartY,
+    ghost2X = ghost2StartX, ghost2Y = ghost2StartY,
+    ghost3X = ghost3StartX, ghost3Y = ghost3StartY,
+    ghost4X = ghost4StartX, ghost4Y = ghost4StartY;
 
 bool gameRunning = true;
 bool isEnergized = false;
 
+// Pacman Direction Flags
 bool movingLeft = false;
 bool movingRight = false;
 bool movingUp = false;
 bool movingDown = false;
 
+// ghost1 Direction Flags
 bool ghost1MovingUp = true;
 bool ghost1MovingDown = false;
 
+// ghost2 Direction Flags
 bool ghost2MovingRight = true;
 bool ghost2MovingLeft = false;
 
+// ghost3 Direction Flags
 bool ghost3movingLeft = false;
 bool ghost3movingRight = false;
 bool ghost3movingUp = false;
 bool ghost3movingDown = false;
 
-unsigned int seed = 12345;
-int randy;
+// Seed for Psuedo-Random Path of ghost3
+unsigned int seed = 6969;
 
+// Function Prototypes
+void SetColor(int color);
 void gotoxy(int x, int y);
 char getCharAt(int x, int y);
 void hideCursor();
@@ -73,31 +85,44 @@ void printMap();
 void updatePacman();
 void updateGhost1();
 void updateGhost2();
+bool clearPathHorizontally(int fromX, int toX, int y);
 void updateGhost3();
 void updateGhost4();
 void countScore();
 int randomNumber(int min, int max);
 
+// main Function
 int main() {
     clearScreen();
     hideCursor();
     loadMap();
     printMap();
-    randy = randomNumber(1, 100);
-    bool d = false;
+    randy = randomNumber(1, 100); // Initial random Input for ghost3
     unsigned int randomInput = 0;
     while (gameRunning) {
-        Sleep(100);
+        Sleep(tickTime);
+
+        if (randomInput % 4 == 0) randy = randomNumber(1, 100); // Updating ghost3 direction every 4 ticks to reduce chaotic direction changes.
+
+        // Updating All GameObjects
         updateGhost1();
         updateGhost2();
-        if (randomInput % 4 == 0) randy = randomNumber(1, 100);
         updateGhost3();
-       // updateGhost4();
+        updateGhost4();
         updatePacman();
-        countScore();
-        gotoxy(0, 28); cout << "Lives: " << lives << "\tScore: " << score;
         randomInput++;
-        if (lives == 0) {
+
+        // Printing Score
+        gotoxy(0, 28); cout << "Lives: " << lives << "\tScore: " << score;
+        
+
+        // Game Over Checks
+        if (score >= 250) {
+            clearScreen();
+            cout << "You Won!!!\tFinal Score: " << score;
+            gameRunning = false;
+        }
+        else if (lives == 0) {
             clearScreen();
             cout << "Game over\tFinal Score: " << score;
             gameRunning = false;
@@ -111,16 +136,14 @@ void updateGhost1() {
     if (ghost1MovingUp) {
         bg_tile = getCharAt(ghost1X, ghost1Y+1);
         if (bg_tile == '#') bg_tile = '.';
-        
-        
         if (bg_tile != '#') {
             bg_tile = getCharAt(ghost1X, ghost1Y-1);
-            if (bg_tile == 'G') bg_tile = ' ';
+            if (bg_tile == 'G' || bg_tile == 'g') bg_tile = ' ';
             if (bg_tile == 'p') {lives--;x = 35, y = 14;bg_tile = ' ';}
             gotoxy(ghost1X, ghost1Y);
             cout << bg_tile;
             gotoxy(ghost1X, ghost1Y-1);
-            cout << "G";
+            SetColor(5); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
             ghost1Y--;
             if (getCharAt(ghost1X, ghost1Y-1) == '#') {
                 ghost1MovingDown = true;
@@ -132,15 +155,14 @@ void updateGhost1() {
     else if (ghost1MovingDown) {
         bg_tile = getCharAt(ghost1X, ghost1Y-1);
         if (bg_tile == '#') bg_tile = '.';
-        
         if (bg_tile != '#') {
             bg_tile = getCharAt(ghost1X, ghost1Y+1);
-            if (bg_tile == 'G') bg_tile = ' ';
+            if (bg_tile == 'G' || bg_tile == 'g') bg_tile = ' ';
             if (bg_tile == 'p') {lives--;x = 35, y = 14;bg_tile = ' ';}
             gotoxy(ghost1X, ghost1Y);
             cout << bg_tile;
             gotoxy(ghost1X, ghost1Y+1);
-            cout << "G";
+            SetColor(5); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
             ghost1Y++;
             if (getCharAt(ghost1X, ghost1Y+1) == '#') {
                 ghost1MovingUp = true;
@@ -149,21 +171,20 @@ void updateGhost1() {
         }
     }
 }
-char ghost3PrevChar = ' ';
+
 void updateGhost2() {
     char bg_tile;
     if (ghost2MovingRight) {
         bg_tile = getCharAt(ghost2X-2, ghost2Y);
         if (bg_tile == '#') bg_tile = '.';
-        
         if (bg_tile != '#') {
             bg_tile = getCharAt(ghost2X+1, ghost2Y);
-            if (bg_tile == 'G') bg_tile = ' ';
+            if (bg_tile == 'G' || bg_tile == 'g') bg_tile = ' ';
             if (bg_tile == 'p') {lives--;x = 35, y = 14;bg_tile = ' ';}
             gotoxy(ghost2X, ghost2Y);
             cout << bg_tile;
             gotoxy(ghost2X+1, ghost2Y);
-            cout << "G";
+            SetColor(4); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
             ghost2X++;
             if (getCharAt(ghost2X+2, ghost2Y) == '#') {
                 ghost2MovingLeft = true;
@@ -176,12 +197,12 @@ void updateGhost2() {
         if (bg_tile == '#') bg_tile = '.';
         if (bg_tile != '#') {
             bg_tile = getCharAt(ghost2X-1, ghost2Y);
-            if (bg_tile == 'G') bg_tile = ' ';
+            if (bg_tile == 'G' || bg_tile == 'g') bg_tile = ' ';
             if (bg_tile == 'p') {lives--;x = 35, y = 14;bg_tile = ' ';}
             gotoxy(ghost2X, ghost2Y);
             cout << bg_tile;
             gotoxy(ghost2X-1, ghost2Y);
-            cout << "G";
+            SetColor(4); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
             ghost2X--;
             if (getCharAt(ghost2X-2, ghost2Y) == '#') {
                 ghost2MovingRight = true;
@@ -190,7 +211,10 @@ void updateGhost2() {
         }
     }
 }
+
+char ghost3PrevChar = ' ';
 void updateGhost3() {
+    // Check for Random Inputs
     if (randy >= 1 && randy <= 25) {
         ghost3movingRight = true;
         ghost3movingLeft = ghost3movingUp = ghost3movingDown = false;
@@ -212,6 +236,7 @@ void updateGhost3() {
         }
     }
 
+    // Wall Detection
     if (ghost3movingRight && getCharAt(ghost3X + 2, ghost3Y) == '#') {
         ghost3movingRight = false;
     }
@@ -225,14 +250,13 @@ void updateGhost3() {
         ghost3movingDown = false;
     }
     
-    // Erase ghost from previous position (print what was there before)
     gotoxy(ghost3X, ghost3Y);
     cout << ghost3PrevChar;
-
-    // Calculate new position and store the character from it
+    
+    // Necessary checks for stuff!
     if (ghost3movingRight) {
         ghost3PrevChar = getCharAt(ghost3X + 1, ghost3Y);
-        if (ghost3PrevChar == 'G') {
+        if (ghost3PrevChar == 'G' || ghost3PrevChar == 'g') {
             ghost3PrevChar = ' ';
         }
         if (ghost3PrevChar == 'p') {
@@ -244,7 +268,7 @@ void updateGhost3() {
     }
     else if (ghost3movingLeft) {
         ghost3PrevChar = getCharAt(ghost3X - 1, ghost3Y);
-        if (ghost3PrevChar == 'G') {
+        if (ghost3PrevChar == 'G' || ghost3PrevChar == 'g') {
             ghost3PrevChar = ' ';
         }
         if (ghost3PrevChar == 'p') {
@@ -256,7 +280,7 @@ void updateGhost3() {
     }
     else if (ghost3movingUp) {
         ghost3PrevChar = getCharAt(ghost3X, ghost3Y - 1);
-        if (ghost3PrevChar == 'G') {
+        if (ghost3PrevChar == 'G' || ghost3PrevChar == 'g') {
             ghost3PrevChar = ' ';
         }
         if (ghost3PrevChar == 'p') {
@@ -268,7 +292,7 @@ void updateGhost3() {
     }
     else if (ghost3movingDown) {
         ghost3PrevChar = getCharAt(ghost3X, ghost3Y + 1);
-        if (ghost3PrevChar == 'G') {
+        if (ghost3PrevChar == 'G' || ghost3PrevChar == 'g') {
             ghost3PrevChar = ' ';
         }
         if (ghost3PrevChar == 'p') {
@@ -281,13 +305,14 @@ void updateGhost3() {
 
     // Draw ghost at new position
     gotoxy(ghost3X, ghost3Y);
-    cout << "G";
-    
+    SetColor(2); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
 }
 
-enum Direction { NONE, LEFT, RIGHT, UP, DOWN };
-Direction ghostLastDir = NONE;
+// 0 = none, 1 = left, 2 = right, 3 = up, 4 = down
+int ghostLastDir = 0;
+char ghost4PreviousChar = ' ';
 
+// Function to check if there is a wall between pacman and ghost, when they are vetically aligned :)
 bool clearPathHorizontally(int fromX, int toX, int y) {
     int step = (toX > fromX) ? 1 : -1;
     for (int i = fromX + step; i != toX; i += step) {
@@ -297,77 +322,104 @@ bool clearPathHorizontally(int fromX, int toX, int y) {
 }
 
 void updateGhost4() {
-    gotoxy(ghost4X, ghostY);
-    cout << " ";
+    // Restore the previous background character
+    gotoxy(ghost4X, ghost4Y);
+    cout << ghost4PreviousChar;
 
+    // Store the current charcter at the new location
     int dx = x - ghost4X;
-    int dy = y - ghostY;
+    int dy = y - ghost4Y;
     bool moved = false;
+    int newX = ghost4X, newY = ghost4Y;
 
-    // Not aligned vertically → focus on aligning Y
-    if (ghostY != y) {
-        int dirY = (dy > 0) ? 1 : -1;
-
-        if (getCharAt(ghost4X, ghostY + dirY) != '#') {
-            ghostY += dirY;
-            ghostLastDir = (dirY > 0) ? DOWN : UP;
+    if (dy != 0) {
+        int stepY = (dy > 0) ? 1 : -1;
+        if (getCharAt(ghost4X, ghost4Y + stepY) != '#') {
+            newY += stepY;
+            ghostLastDir = (stepY > 0) ? 4 : 3;
             moved = true;
-        } else {
-            // Y path blocked → smart side-step
-            if (getCharAt(ghost4X + 1, ghostY) != '#' && ghostLastDir != LEFT) {
-                ghost4X++;
-                ghostLastDir = RIGHT;
+        } 
+        else {
+            if (getCharAt(ghost4X + 1, ghost4Y) != '#' && ghostLastDir != 1) {
+                newX++;
+                ghostLastDir = 2;
                 moved = true;
-            } else if (getCharAt(ghost4X - 1, ghostY) != '#' && ghostLastDir != RIGHT) {
-                ghost4X--;
-                ghostLastDir = LEFT;
+            } 
+            else if (getCharAt(ghost4X - 1, ghost4Y) != '#' && ghostLastDir != 2) {
+                newX--;
+                ghostLastDir = 1;
                 moved = true;
             }
         }
-    }
-    // Vertically aligned → try horizontal move if clear path
+    } 
     else {
-        if (clearPathHorizontally(ghost4X, x, ghostY)) {
-            int dirX = (dx > 0) ? 1 : -1;
-
-            if (getCharAt(ghost4X + dirX, ghostY) != '#') {
-                ghost4X += dirX;
-                ghostLastDir = (dirX > 0) ? RIGHT : LEFT;
+        if (clearPathHorizontally(ghost4X, x, ghost4Y)) {
+            int stepX = (dx > 0) ? 1 : -1;
+            if (getCharAt(ghost4X + stepX, ghost4Y) != '#') {
+                newX += stepX;
+                ghostLastDir = (stepX > 0) ? 2 : 1;
                 moved = true;
             }
-        } else {
-            // Horizontal path blocked → re-align Y to find another angle
-            if (getCharAt(ghost4X, ghostY + 1) != '#' && ghostLastDir != UP) {
-                ghostY++;
-                ghostLastDir = DOWN;
+        } 
+        else {
+            if (getCharAt(ghost4X, ghost4Y + 1) != '#' && ghostLastDir != 3) {
+                newY++;
+                ghostLastDir = 4;
                 moved = true;
-            } else if (getCharAt(ghost4X, ghostY - 1) != '#' && ghostLastDir != DOWN) {
-                ghostY--;
-                ghostLastDir = UP;
+            } 
+            else if (getCharAt(ghost4X, ghost4Y - 1) != '#' && ghostLastDir != 4) {
+                newY--;
+                ghostLastDir = 3;
                 moved = true;
             }
         }
     }
 
-    // Fallback if stuck
+    // Fallback
     if (!moved) {
-        if (getCharAt(ghost4X + 1, ghostY) != '#') {
-            ghost4X++;
-            ghostLastDir = RIGHT;
-        } else if (getCharAt(ghost4X - 1, ghostY) != '#') {
-            ghost4X--;
-            ghostLastDir = LEFT;
-        } else if (getCharAt(ghost4X, ghostY + 1) != '#') {
-            ghostY++;
-            ghostLastDir = DOWN;
-        } else if (getCharAt(ghost4X, ghostY - 1) != '#') {
-            ghostY--;
-            ghostLastDir = UP;
+        if (getCharAt(ghost4X + 1, ghost4Y) != '#') {
+            newX++;
+            ghostLastDir = 2;
+        } else if (getCharAt(ghost4X - 1, ghost4Y) != '#') {
+            newX--;
+            ghostLastDir = 1;
+        } else if (getCharAt(ghost4X, ghost4Y + 1) != '#') {
+            newY++;
+            ghostLastDir = 4;
+        } else if (getCharAt(ghost4X, ghost4Y - 1) != '#') {
+            newY--;
+            ghostLastDir = 3;
         }
     }
 
-    gotoxy(ghost4X, ghostY);
-    cout << "G";
+    // Update ghast position and store th background char at new position
+    ghost4PreviousChar = getCharAt(newX, newY);
+    ghost4X = newX;
+    ghost4Y = newY;
+
+    // Reset position if pacman is energizzed
+    if (ghost4X == x && ghost4Y == y) {
+        if (!isEnergized) {
+            lives--;
+            x = 35, y = 14;
+        } else {
+            ghost4X = ghost4StartX;
+            ghost4Y = ghost4StartY;
+            ghost4PreviousChar = getCharAt(ghost4X, ghost4Y);
+            gotoxy(ghost4X, ghost4Y);
+            SetColor(3); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
+        }
+        
+    }
+
+    gotoxy(ghost4X, ghost4Y);
+    if (ghost4PreviousChar != 'p' && ghost4PreviousChar != 'J' && ghost4PreviousChar != 'g' && ghost4PreviousChar != 'G') {
+        cout << ghost4PreviousChar;
+    }
+    gotoxy(ghost4X, ghost4Y);
+    // Draw ghost at new position
+    
+    SetColor(3); isEnergized ? cout << "g" : cout << "G"; SetColor(7);
 }
 
 void updatePacman() {
@@ -381,13 +433,13 @@ void updatePacman() {
         movingRight = movingUp = movingDown = false;
     } 
     else if (GetAsyncKeyState(VK_UP) & 0x8000) {
-        if (getCharAt(x, y - 1) != '#' && getCharAt(x+1, y-1) != '#' && getCharAt(x-1, y-1) != '#') {
+        if (getCharAt(x, y - 1) != '#' && getCharAt(x + 1, y - 1) != '#' && getCharAt(x - 1, y - 1) != '#') {
             movingUp = true; 
             movingRight = movingLeft = movingDown = false;
         }
     } 
     else if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
-        if (getCharAt(x, y + 1) != '#' && getCharAt(x+1, y+1) != '#' && getCharAt(x-1, y+1) != '#') {
+        if (getCharAt(x, y + 1) != '#' && getCharAt(x + 1, y + 1) != '#' && getCharAt(x - 1, y + 1) != '#') {
             movingDown = true; 
             movingRight = movingLeft = movingUp = false;
         }
@@ -399,13 +451,32 @@ void updatePacman() {
     if (movingUp && getCharAt(x, y - 1) == '#') movingUp = false;
     if (movingDown && getCharAt(x, y + 1) == '#') movingDown = false;
 
-    // Move Pac-Man
+    countScore();
+
+    // Clear previous Pac-Man
     gotoxy(x, y); cout << " ";
-    if (movingRight) x++; 
+
+    // Move Pac-Man
+    if (movingRight) x++;
     else if (movingLeft) x--;
     else if (movingDown) y++;
     else if (movingUp) y--;
-    gotoxy(x, y); cout << "p";
+
+    // Check for ghost collision
+    if (getCharAt(x, y) == 'G') {
+        lives--;
+        x = 35, y = 14;
+    }
+
+    // Draw Pac-Man
+    gotoxy(x, y);
+    SetColor(6);
+    cout << (isEnergized ? 'J' : 'p');
+    SetColor(7);
+}
+
+void SetColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
 int randomNumber(int min, int max) {
@@ -426,11 +497,26 @@ void countScore() {
     else if (getCharAt(x, y - 1) == '.' && movingUp) {
         score++;
     }
+    if ((getCharAt(x + 1, y) == 'O' && movingRight) || (getCharAt(x - 1, y) == 'O' && movingLeft) || (getCharAt(x, y + 1) == 'O' && movingDown) || (getCharAt(x, y - 1) == 'O' && movingUp)) {
+        isEnergized = true;
+        score += 4;
+    }
+    if ((getCharAt(x + 1, y) == 'g' && movingRight) || (getCharAt(x - 1, y) == 'g' && movingLeft) || (getCharAt(x, y + 1) == 'g' && movingDown) || (getCharAt(x, y - 1) == 'g' && movingUp)) {
+        score += 10;
+    }
+    if (isEnergized) {
+        tickCountForisEnergized++;
+        if (tickCountForisEnergized == 30) {
+            isEnergized = false;
+            tickCountForisEnergized = 0;
+        }
+    }
 }
 
 void printMap() {
     for (int row = 0; row < 24; row++) {
         for (int col = 0; col < 71; col++) {
+            mapp[row][col] == '#' ? SetColor(1) : SetColor(7);
             cout << mapp[row][col];
         }
         cout << endl;
