@@ -564,10 +564,9 @@ char getCharAt(int x, int y) {
 void hideCursor() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
-
-    GetConsoleCursorInfo(hConsole, &cursorInfo);  // Get current cursor settings
-    cursorInfo.bVisible = FALSE;                  // Set cursor visibility to false
-    SetConsoleCursorInfo(hConsole, &cursorInfo);  // Apply the new settings
+    GetConsoleCursorInfo(hConsole, &cursorInfo);  
+    cursorInfo.bVisible = FALSE;                  
+    SetConsoleCursorInfo(hConsole, &cursorInfo);  
 }
 
 void clearScreen() {
