@@ -7,11 +7,11 @@
 
 using namespace std;
 
-const int levelRows = 28;
-const int levelColumns = 530;  
-const int renderWidth = 100;
-const int cameraMargin = renderWidth / 2;
-const string player = "\033[48;2;46;188;254m\033[38;2;0;0;0m@\033[0m\033[48;2;46;188;254m";
+const int LEVEL_ROWS = 28;
+const int LEVEL_COLUMNS = 530;  
+const int RENDER_WIDTH = 100;
+const int CAMERA_MARGIN = RENDER_WIDTH / 2;
+const string PLAYER = "\033[48;2;46;188;254m\033[38;2;0;0;0m@\033[0m\033[48;2;46;188;254m";
 const int MAX_HEALTH = 3;
 
 const int NONGAMEPLAYSCREENROWS = 25;
@@ -29,23 +29,23 @@ const int MAX_ENEMIES = 10;
 
 
 string nonGamePlayScreens(string filename, char nonGamePlayScreen[][NONGAMEPLAYSCREENCOLUMNS]);
-bool loadLevel(char level[][levelColumns], string levelFileName);
+bool loadLevel(char level[][LEVEL_COLUMNS], string levelFileName);
 void handleLevelTransition(string &levelNo, int &cameraX, int &playerX, int &playerY, bool &gameRunning, char nonGamePlayScreen[][NONGAMEPLAYSCREENCOLUMNS]);
-void updateRender(char level[][levelColumns], char render[][renderWidth], int &cameraX, int &score, int &health);
-void drawFrame(char render[][renderWidth]);
-char movePlayer(char level[][levelColumns], string direction, string &levelNo, int &playerX, int &playerY, int &cameraX);
+void updateRender(char level[][LEVEL_COLUMNS], char render[][RENDER_WIDTH], int &cameraX, int &score, int &health);
+void drawFrame(char render[][RENDER_WIDTH]);
+char movePlayer(char level[][LEVEL_COLUMNS], string direction, string &levelNo, int &playerX, int &playerY, int &cameraX);
 void gotoxy(int x, int y);
 void hideCursor();
-bool isGrounded(char level[][levelColumns], int &playerX, int &playerY);
+bool isGrounded(char level[][LEVEL_COLUMNS], int &playerX, int &playerY);
 void clearScreen();
-char getCharAtLevel(char level[][levelColumns], int x, int y);
-void moveEnemy(char level[][levelColumns], int row, int &col, int &direction, char enemyChar);
+char getCharAtLevel(char level[][LEVEL_COLUMNS], int x, int y);
+void moveEnemy(char level[][LEVEL_COLUMNS], int row, int &col, int &direction, char enemyChar);
 void clearInputBuffer();
 
 int main() { 
     srand(time(0));
-    char level[levelRows][levelColumns];
-    char render[levelRows][renderWidth];
+    char level[LEVEL_ROWS][LEVEL_COLUMNS];
+    char render[LEVEL_ROWS][RENDER_WIDTH];
     char nonGamePlayScreen[NONGAMEPLAYSCREENROWS][NONGAMEPLAYSCREENCOLUMNS];
     string levelNo = "";
 
@@ -105,7 +105,7 @@ int main() {
     updateRender(level, render, cameraX, score, health);
     drawFrame(render);
     gotoxy(playerX - cameraX, playerY);
-    cout << player;
+    cout << PLAYER;
 
     while (gameRunning) {
         Sleep(20);
@@ -171,26 +171,26 @@ int main() {
             
             gotoxy(playerX - cameraX, playerY); cout << " ";
             playerY += step;
-            gotoxy(playerX - cameraX, playerY); cout << player;
+            gotoxy(playerX - cameraX, playerY); cout << PLAYER;
         }
 
         playerYFloat += velocityY;
 
         // Camera 
-        if (playerX - cameraX >= cameraMargin && cameraX + renderWidth < levelColumns) {
-            cameraX = playerX - cameraMargin;
+        if (playerX - cameraX >= CAMERA_MARGIN && cameraX + RENDER_WIDTH < LEVEL_COLUMNS) {
+            cameraX = playerX - CAMERA_MARGIN;
         } 
-        else if (playerX - cameraX < cameraMargin && cameraX > 0) {
-            cameraX = max(0, playerX - cameraMargin);
+        else if (playerX - cameraX < CAMERA_MARGIN && cameraX > 0) {
+            cameraX = max(0, playerX - CAMERA_MARGIN);
         }
 
         updateRender(level, render, cameraX, score, health);
         drawFrame(render);
         gotoxy(playerX - cameraX, playerY);
-        cout << player;
+        cout << PLAYER;
 
         // Health System
-        if ((playerY >= levelRows + 3) || (getCharAtLevel(level, playerX, playerY)) == 'E' || (getCharAtLevel(level, playerX+1, playerY)) == 'E' || (getCharAtLevel(level, playerX-1, playerY)) == 'E') {
+        if ((playerY >= LEVEL_ROWS + 3) || (getCharAtLevel(level, playerX, playerY)) == 'E' || (getCharAtLevel(level, playerX+1, playerY)) == 'E' || (getCharAtLevel(level, playerX-1, playerY)) == 'E') {
             health--;
             cameraX = 0;
             playerX = 6;
@@ -248,7 +248,7 @@ void handleLevelTransition(string &levelNo, int &cameraX, int &playerX, int &pla
     cout << "\033[0m";
 }
 
-void moveEnemy(char level[][levelColumns], int row, int &col, int &direction, char enemyChar) {
+void moveEnemy(char level[][LEVEL_COLUMNS], int row, int &col, int &direction, char enemyChar) {
     level[row][col] = ' ';
 
     int nextCol = col + direction;
@@ -290,37 +290,37 @@ string nonGamePlayScreens(string filename, char nonGamePlayScreen[][NONGAMEPLAYS
     return result;
 }
 
-char movePlayer(char level[][levelColumns], string direction, string &levelNo, int &playerX, int &playerY, int &cameraX) {
+char movePlayer(char level[][LEVEL_COLUMNS], string direction, string &levelNo, int &playerX, int &playerY, int &cameraX) {
     int newX = playerX;
     if (direction == "LEFT") newX--;
     else if (direction == "RIGHT") newX++;
 
-    if (newX >= 0 && newX < levelColumns && (getCharAtLevel(level, newX, playerY) != '#' && getCharAtLevel(level, newX, playerY) != 'M' && getCharAtLevel(level, newX, playerY) != '%')) {
+    if (newX >= 0 && newX < LEVEL_COLUMNS && (getCharAtLevel(level, newX, playerY) != '#' && getCharAtLevel(level, newX, playerY) != 'M' && getCharAtLevel(level, newX, playerY) != '%')) {
         gotoxy(playerX - cameraX, playerY); cout << ' ';
         playerX = newX;
-        gotoxy(playerX - cameraX, playerY); cout << player;
+        gotoxy(playerX - cameraX, playerY); cout << PLAYER;
     }
-    if (newX >= 0 && newX < levelColumns && getCharAtLevel(level, newX, playerY) == '"') {
+    if (newX >= 0 && newX < LEVEL_COLUMNS && getCharAtLevel(level, newX, playerY) == '"') {
         return '"';
     }
-    if (newX >= 0 && newX < levelColumns && getCharAtLevel(level, newX, playerY) == 'O') {
+    if (newX >= 0 && newX < LEVEL_COLUMNS && getCharAtLevel(level, newX, playerY) == 'O') {
         return 'O';
     }
     
     return '!';
 }
 
-bool isGrounded(char level[][levelColumns], int &playerX, int &playerY) {
+bool isGrounded(char level[][LEVEL_COLUMNS], int &playerX, int &playerY) {
     return (getCharAtLevel(level, playerX, playerY + 1) == '#' || getCharAtLevel(level, playerX, playerY + 1) == 'M' || getCharAtLevel(level, playerX, playerY + 1) == '%');
 }
 
-bool loadLevel(char level[][levelColumns], string levelFileName) {
+bool loadLevel(char level[][LEVEL_COLUMNS], string levelFileName) {
     fstream file(levelFileName, ios::in);
     if (file.is_open()) {
         string line;
-        for (int row = 0; row < levelRows; row++) {
+        for (int row = 0; row < LEVEL_ROWS; row++) {
             getline(file, line);
-            for (int col = 0; col < levelColumns; col++) {
+            for (int col = 0; col < LEVEL_COLUMNS; col++) {
                 level[row][col] = line[col];
             }
         }
@@ -330,10 +330,10 @@ bool loadLevel(char level[][levelColumns], string levelFileName) {
     return false;
 }
 
-void updateRender(char level[][levelColumns], char render[][renderWidth], int &cameraX, int &score, int &health) {
-    for (int row = 0; row < levelRows; row++) {
-        for (int col = 0; col < renderWidth; col++) {
-            if (cameraX + col < levelColumns) {
+void updateRender(char level[][LEVEL_COLUMNS], char render[][RENDER_WIDTH], int &cameraX, int &score, int &health) {
+    for (int row = 0; row < LEVEL_ROWS; row++) {
+        for (int col = 0; col < RENDER_WIDTH; col++) {
+            if (cameraX + col < LEVEL_COLUMNS) {
                 render[row][col] = level[row][cameraX + col];
             } 
             else {
@@ -351,11 +351,11 @@ void updateRender(char level[][levelColumns], char render[][renderWidth], int &c
     }
 }
 
-void drawFrame(char render[][renderWidth]) {
+void drawFrame(char render[][RENDER_WIDTH]) {
     gotoxy(0, 0);
     string frame;
-    for (int row = 0; row < levelRows; row++) {
-        for (int col = 0; col < renderWidth; col++) {
+    for (int row = 0; row < LEVEL_ROWS; row++) {
+        for (int col = 0; col < RENDER_WIDTH; col++) {
             if (render[row][col] == 'M') frame += "\033[48;2;255;255;0m\033[38;2;255;255;0m" + string(1, render[row][col]) + "\033[0m";
             else if (render[row][col] == 'O') frame += "\033[48;2;46;188;254m\033[38;2;255;255;0m" + string(1, render[row][col]) + "\033[0m";
             else if (render[row][col] == '%') frame += "\033[48;2;0;255;0m\033[38;2;0;255;0m" + string(1, render[row][col]) + "\033[0m";
@@ -369,8 +369,8 @@ void drawFrame(char render[][renderWidth]) {
     cout << frame;
 }
 
-char getCharAtLevel(char level[][levelColumns], int x, int y) {
-    if (x >= 0 && x < levelColumns && y >= 0 && y < levelRows) {
+char getCharAtLevel(char level[][LEVEL_COLUMNS], int x, int y) {
+    if (x >= 0 && x < LEVEL_COLUMNS && y >= 0 && y < LEVEL_ROWS) {
         return level[y][x];
     }
     return ' ';

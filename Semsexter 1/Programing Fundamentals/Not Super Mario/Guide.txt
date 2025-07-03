@@ -1,25 +1,25 @@
 #                                                                                                                  #
 #                                                                                                                  #
+#      Movement:                                                                                                   #
+#                                                                                                                  #
+#           O Press 'A' to move left.                                                                              #
+#                                                                                                                  #
+#           O press 'D' to move right.                                                                             #
+#                                                                                                                  #
+#           O Press 'W' to jump.                                                                                   #
+#                                                                                                                  #
+#      Guidelines:                                                                                                 #
+#                                                                                                                  #
+#           O Collect coins or hit the mystery box to increase score(Mystery box gives random score                #
+#             between 10 and 100).                                                                                 #
+#                                                                                                                  #
+#           O Walk through castle door at the end of the level to move to the next level.                          #
+#                                                                                                                  #
+#           O Avoid hiting enimies and falling off the map :)                                                      #
 #                                                                                                                  #
 #                                                                                                                  #
-#             ******** *    * ******** *       *            ******* *   * *     * *****  ******** *****            #
-#             *        *    * *        *       *               *    *   * **   ** *    * *        *    *           #
-#             *        *    * *        *       *               *    *   * * * * * *    * *        *    *           #
-#             *        *    * *        *       *               *    *   * *  *  * *    * *        *    *           #
-#             ******** ****** *****    *       *               *    *   * *     * *****  *****    *****            #
-#                    * *    * *        *       *           *   *    *   * *     * *      *        *  *             #
-#             ******** *    * ******** ******* *******      ***      ***  *     * *      ******** *   *            #
 #                                                                                                                  #
 #                                                                                                                  #
-#                                                                                                                  #
-#                                                                                                                  #
-#                                                    (1) START                                                     #
-#                                                                                                                  #
-#                                                    (2) GUIDE                                                     #
-#                                                                                                                  #
-#                                                    (3) EXIT                                                      #
-#                                                                                                                  #
-#                                                                                                                  #
-#                                                                                                                  #
+#                                                  (1) Go back                                                     #
 #                                                                                                                  #
 #                                                                                                                  #

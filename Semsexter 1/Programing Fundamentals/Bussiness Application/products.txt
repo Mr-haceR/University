@@ -1,5 +1,6 @@
-3
+4
 
 Apple Pie,2,30,2,Plate
 Orange,5,45,1,Kg
 Banana,2,34,2,Dosen
+Apple Juice,2,66,3,Bottle

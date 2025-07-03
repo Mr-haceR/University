@@ -11,5 +11,6 @@
         "plaintext": false,
         "markdown": false,
         "scminput": false
-    }
+    },
+    "liveServer.settings.port": 5501
 }

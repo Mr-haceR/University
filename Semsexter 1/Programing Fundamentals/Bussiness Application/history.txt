@@ -4,3 +4,4 @@ Ali,1,6
 Ahmed,2,40
 Ahmed,2,36
 Ali,1,0
+Talal,3,6
