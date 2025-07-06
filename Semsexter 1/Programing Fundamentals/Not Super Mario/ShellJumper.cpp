@@ -31,9 +31,10 @@ void gotoxy(int x, int y);
 void hideCursor();
 bool isGrounded(char level[][LEVEL_COLUMNS], int &playerX, int &playerY);
 void clearScreen();
+void clearInputBuffer();
 char getCharAtLevel(char level[][LEVEL_COLUMNS], int x, int y);
 void moveEnemy(char level[][LEVEL_COLUMNS], int row, int &col, int &direction, char enemyChar);
-void clearInputBuffer();
+
 
 int main() { 
     srand(time(0));
@@ -241,8 +242,7 @@ void handleLevelTransition(string &levelNo, int &cameraX, int &playerX, int &pla
                 break;
             }
             else if (ch = '3') {
-                gameRunning = false;
-                break;
+                exit(0);
             }
         }
     }
